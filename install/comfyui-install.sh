@@ -36,28 +36,32 @@ fetch_and_deploy_gh_release "ComfyUI" "comfyanonymous/ComfyUI" "tarball" "latest
 
 msg_info "Python dependencies"
 $STD uv venv "/opt/ComfyUI/venv"
+
+# Source: https://pytorch.org/get-started/locally/
+PYTORCH_BUILD="2.9.1"
+OS="Linux"
+PACKAGE="pip"
+LANGUAGE="python"
+COMPUTE_PLATFORM=""
+
 if [[ "${comfyui_gpu_type,,}" == "nvidia" ]]; then
-  $STD uv pip install \
-    torch \
-    torchvision \
-    torchaudio \
-    --extra-index-url "https://download.pytorch.org/whl/cu128" \
-    --python="/opt/ComfyUI/venv/bin/python"
+  COMPUTE_PLATFORM="cu128"
 elif [[ "${comfyui_gpu_type,,}" == "amd" ]]; then
-  $STD uv pip install \
-    torch \
-    torchvision \
-    torchaudio \
-    --index-url "https://download.pytorch.org/whl/rocm6.3" \
-    --python="/opt/ComfyUI/venv/bin/python"
+  COMPUTE_PLATFORM="rocm6.4"
 elif [[ "${comfyui_gpu_type,,}" == "intel" ]]; then
-  $STD uv pip install \
-    torch \
-    torchvision \
-    torchaudio \
-    --index-url "https://download.pytorch.org/whl/xpu" \
-    --python="/opt/ComfyUI/venv/bin/python"
+  COMPUTE_PLATFORM="xpu"
+elif [[ "${comfyui_gpu_type,,}" == "none" ]]; then
+  # Default to CPU
+  COMPUTE_PLATFORM="cpu"
 fi
+
+$STD uv pip install \
+  torch \
+  torchvision \
+  torchaudio \
+  --index-url "https://download.pytorch.org/whl/${COMPUTE_PLATFORM}" \
+  --python="/opt/ComfyUI/venv/bin/python"
+
 $STD uv pip install -r "/opt/ComfyUI/requirements.txt" --python="/opt/ComfyUI/venv/bin/python"
 msg_ok "Python dependencies"
 
